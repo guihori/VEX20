@@ -16,7 +16,9 @@ const int BACK_RIGHT_MOTOR = 6;
 const int BACK_LEFT_MOTOR = 10;
 const int FRONT_RIGHT_MOTOR = 13;
 const int FRONT_LEFT_MOTOR = 15;
-
+const int INTAKE_LEFT = 5;
+const int INTAKE_RIGHT = 2;
+const int LIFT = 3;
 
 void move_lift(pros::Motor lift, double ticks, pros::Controller controller, bool op_control = false) {
 
@@ -127,10 +129,10 @@ void autonomous() {
 	//The controller for this bot
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 	//Intake motors
-	pros::Motor intake_R(2, pros::E_MOTOR_GEARSET_18);
-	pros::Motor intake_L(5, pros::E_MOTOR_GEARSET_18, 1);
+	pros::Motor intake_R(INTAKE_RIGHT, pros::E_MOTOR_GEARSET_18);
+	pros::Motor intake_L(INTAKE_LEFT, pros::E_MOTOR_GEARSET_18, 1);
 	//Lift Motor and Setup
-	pros::Motor lift(3, pros::E_MOTOR_GEARSET_36, 1);
+	pros::Motor lift(LIFT, pros::E_MOTOR_GEARSET_36, 1);
 	lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 	//Stop Button to prevent lift from lowering too far
 	pros::ADIDigitalIn lift_stop('A');
@@ -302,9 +304,9 @@ void autonomous() {
 void opcontrol() {
 	printf("beginning control\n");
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::Motor intake_R(2, pros::E_MOTOR_GEARSET_18);
-	pros::Motor intake_L(1, pros::E_MOTOR_GEARSET_18, 1);
-	pros::Motor lift(3, pros::E_MOTOR_GEARSET_36, 1);
+	pros::Motor intake_R(INTAKE_RIGHT, pros::E_MOTOR_GEARSET_18);
+	pros::Motor intake_L(INTAKE_LEFT, pros::E_MOTOR_GEARSET_18, 1);
+	pros::Motor lift(LIFT, pros::E_MOTOR_GEARSET_36, 1);
 	lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 	pros::ADIDigitalIn lift_stop('A');
 
