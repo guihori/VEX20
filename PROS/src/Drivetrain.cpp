@@ -39,13 +39,13 @@ public:
     tpi = tpr/(wheel_diameter*M_PI);
 
     //Constructing the motors and adding them to the array
-    pros::Motor frontR (m_ports[0], gearset, 1);
+    pros::Motor frontR (m_ports[0], gearset,1);
     motors.push_back(frontR);
     pros::Motor frontL (m_ports[1], gearset);
     motors.push_back(frontL);
     pros::Motor rearL (m_ports[2], gearset);
     motors.push_back(rearL);
-    pros::Motor rearR (m_ports[3], gearset, 1);
+    pros::Motor rearR (m_ports[3], gearset,1);
     motors.push_back(rearR);
 
     //Creating PID controllers for each motor
@@ -74,6 +74,14 @@ public:
     motors[1].move(p);
     motors[2].move(p);
     motors[3].move(-p);
+  }
+
+  void mechanum(double fr, double fl, double bl, double br)
+  {
+    motors[0].move(fr);
+    motors[1].move(fl);
+    motors[2].move(bl);
+    motors[3].move(br);
   }
 
 

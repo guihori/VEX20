@@ -12,6 +12,10 @@ bool red = false;
 bool skills = false;
 bool lowering = false;
 
+const int BACK_RIGHT_MOTOR = 6;
+const int BACK_LEFT_MOTOR = 10;
+const int FRONT_RIGHT_MOTOR = 13;
+const int FRONT_LEFT_MOTOR = 15;
 
 
 void move_lift(pros::Motor lift, double ticks, pros::Controller controller, bool op_control = false) {
@@ -124,14 +128,14 @@ void autonomous() {
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 	//Intake motors
 	pros::Motor intake_R(2, pros::E_MOTOR_GEARSET_18);
-	pros::Motor intake_L(1, pros::E_MOTOR_GEARSET_18, 1);
+	pros::Motor intake_L(5, pros::E_MOTOR_GEARSET_18, 1);
 	//Lift Motor and Setup
 	pros::Motor lift(3, pros::E_MOTOR_GEARSET_36, 1);
 	lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 	//Stop Button to prevent lift from lowering too far
 	pros::ADIDigitalIn lift_stop('A');
 	//Setup for the drivetrain
-	std::vector<int> m_ports = {14, 11, 13, 15};
+	std::vector<int> m_ports = {FRONT_RIGHT_MOTOR, FRONT_LEFT_MOTOR, BACK_LEFT_MOTOR, BACK_RIGHT_MOTOR};
 	Drivetrain drivetrain (m_ports, pros::E_MOTOR_GEARSET_18);
 
 
@@ -304,7 +308,7 @@ void opcontrol() {
 	lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 	pros::ADIDigitalIn lift_stop('A');
 
-	std::vector<int> m_ports = {14, 11, 13, 15};
+	std::vector<int> m_ports = {FRONT_RIGHT_MOTOR, FRONT_LEFT_MOTOR, BACK_LEFT_MOTOR, BACK_RIGHT_MOTOR};
 	Drivetrain drivetrain (m_ports, pros::E_MOTOR_GEARSET_18);
 
 
@@ -322,24 +326,59 @@ void opcontrol() {
 		//Both turning and normal driving inputs are placed on an exponential curve (2^(.06*input)-1)
 		//This allows for faster and more precise driving.
 		double y = master.get_analog(ANALOG_LEFT_Y);
-		y = pow(2,.06*abs(y))*abs(y)/y-1;
-		if(master.get_digital(DIGITAL_R1)) {
-			y = y*.3;
-		}
+		double x = master.get_analog(ANALOG_LEFT_X);
 		double turn = master.get_analog(ANALOG_RIGHT_X);
-		double curved_turn = pow(2,.06*abs(turn))*abs(turn)/turn-1;
-		if(abs(turn) > 5 ) {
-			drivetrain.turn(curved_turn);
+		double fr = 0, fl = 0, bl = 0, br = 0;
+
+		// y = pow(2,.06*abs(y))*abs(y)/y-1;
+		// if(master.get_digital(DIGITAL_R1)) {
+		// 	y = y*.3;
+		// }
+
+		// Code for tank drive
+		// double turn = master.get_analog(ANALOG_RIGHT_X);
+		// double curved_turn = pow(2,.06*abs(turn))*abs(turn)/turn-1;
+		// if(abs(turn) > 5 ) {
+		// 	drivetrain.turn(curved_turn);
+		// }
+		// else {
+		// 	drivetrain.drive(y);
+		// }
+
+		if(abs(y) > 10) {
+			fr += y;
+			fl += y;
+			bl += y;
+			br += y;
 		}
-		else {
-			drivetrain.drive(y);
+		if(abs(x) > 10) {
+			fr -= x;
+			fl += x;
+			bl -= x;
+			br += x;
 		}
+		if(abs(turn) > 10) {
+			fr -= turn;
+			fl += turn;
+			bl += turn;
+			br -= turn;
+		}
+
+		//scaling
+		if(abs(fr) > 100 || abs(fl) > 100 || abs(bl) > 100  || abs(br) > 100) {
+			double high = std::max(std::max(std::max(std::abs(fr),std::abs(fl)),std::abs(bl)),std::abs(br));
+			fr = fr/high * 100;
+			fl = fl/high * 100;
+			bl = bl/high * 100;
+			br = br/high * 100;
+		}
+
+		drivetrain.mechanum(fr,fl,bl,br);
 
 		//Control for the intake motors.
 		if(master.get_digital(DIGITAL_R1)) {
 			intake_R.move(127*precision_mult);
 			intake_L.move(127*precision_mult);
-
 		}
 		else if(master.get_digital(DIGITAL_R2)) {
 			intake_R.move(-70*precision_mult);
@@ -366,11 +405,11 @@ void opcontrol() {
 		//Controls for the lift
 		//Checks a button to prevent overcompression of the lift
 		if(master.get_digital(DIGITAL_L1)) {
-			lift.move(150*precision_mult);
+			lift.move(-150*precision_mult);
 			lowering = false;
 		}
-		else if(master.get_digital(DIGITAL_L2) && !lift_stop.get_value()) {
-			lift.move(-150*precision_mult);
+		else if(master.get_digital(DIGITAL_L2) /* && !lift_stop.get_value()*/ ) {
+			lift.move(150*precision_mult);
 			lowering = false;
 		}
 		else if(lift_stop.get_value()) {
